@@ -2,37 +2,47 @@
 
 The starter for **Zero to Live AI Agent on Cloud** (Future Proof India).
 
-It turns a week of rough work notes into a clean five-section report. It works as soon as you put it online. You do not need to install anything on your computer.
+It turns rough notes into a clean five-section report. You will change it into your own agent on Day 2 and put it online on Day 3. It runs straight away in **demo mode**, with no AI key.
 
-## Get your live link in about ten minutes
+## Day 2: run it on your computer
 
-1. **Copy this project.** Click the green **Use this template** button at the top right of this page, then **Create a new repository**. Give it any name, keep it **Public**, and click **Create repository**.
-2. **Put it online.** Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub. Click **Create app**, choose **Deploy a public app from GitHub**, pick the repository you just made, leave the main file as `app.py`, and click **Deploy**.
-3. **Open your link.** After a minute or two you get a web address ending in `streamlit.app`. Open it, press **Load a sample week**, then **Write my report**. That is your agent, live.
+1. **Copy this project.** Click the green **Use this template** button at the top right of this page, then **Create a new repository**. Name it `my-agent`, keep it **Public**, and click **Create repository**.
+2. **Download it.** On your new repository, click the green **Code** button, then **Download ZIP**. Unzip it into a folder on your computer.
+3. **Open the folder in the Antigravity app** (the desktop app, not the Antigravity IDE) and paste the prompt from the Studio step. It installs what the project needs and starts it. If you prefer to type the commands yourself, run these in a terminal inside the folder:
 
-It starts in **demo mode**: it sorts your notes with simple rules, no AI key needed. That is deliberate, so you see something live on Day 1.
+   ```
+   python -m pip install -r requirements.txt
+   python -m streamlit run app.py
+   ```
 
-## Use a real AI model (Day 1 evening or Day 2)
+4. **Open the address it prints** (it starts with `localhost`). Press **Load a sample week**, then **Write my report**.
+
+### Use a real AI model
 
 1. Get a key from an AI provider (Google Gemini has a free tier).
-2. In Streamlit, open your app, then **Settings → Secrets**, and paste the three lines from `.streamlit/secrets.toml.example` with your own key and the provider you chose. Click **Save**.
-3. Refresh your app. The green box now says it is using a real model.
+2. Copy `.streamlit/secrets.toml.example` to a new file `.streamlit/secrets.toml`. Paste your key and your provider's two lines into it.
+3. Restart the project. The green box now says it is using a real model.
 
-Never paste a key into a file on GitHub, into a chat or into a screenshot.
+`.streamlit/secrets.toml` stays on your computer. It is ignored by Git, and you must never upload it to GitHub.
 
-## Change it yourself (Day 2)
+### Make it yours
 
-Open a file on GitHub, click the pencil icon, change it, and press **Commit changes**. Your live app updates by itself within a minute.
-
-| File | What it is | When you change it |
+| File | What it is | What you do |
 |---|---|---|
-| `prompts.py` | the agent's job description | Day 2 |
-| `app.py` | the screen people see | Day 2 |
-| `sample_updates.txt` | a sample week of notes | Day 2 |
-| `demo.py` | the simple rules used in demo mode | you can ignore this |
+| `prompts.py` | the agent's job description | rewrite it in your own words |
+| `app.py` | the screen people see | improve it |
+| `sample_updates.txt` | a sample week of notes | replace with your own samples |
+| `demo.py` | simple rules used in demo mode | you can ignore this |
 
-Ask your AI assistant to write the new text, then paste it into the file on GitHub.
+## Day 3: put it online
+
+1. **Upload to GitHub, in your browser.** Open your repository, click **Add file**, then **Upload files**, drag in your project files and click **Commit changes**. Do **not** upload `.streamlit/secrets.toml`.
+2. **Deploy.** Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub. Click **Create app**, choose **Deploy a public app from GitHub**, pick your repository and leave the main file as `app.py`.
+3. **Add your key safely.** Open **Advanced settings**, and in **Secrets** paste the same three lines you put in `.streamlit/secrets.toml`. Click **Deploy**.
+4. **Open your link.** It ends in `streamlit.app`.
+
+To change something later, open the file on GitHub, click the pencil, edit and press **Commit changes**. Your live app updates by itself.
 
 ## If something fails
 
-Open your app, click **Manage app** at the bottom right, and read the last lines of the log. Paste them into your AI assistant and ask: "What is wrong, in plain words, and what exact change should I make?"
+Open your app and click **Manage app** at the bottom right, then read the last lines of the log. Paste them into your AI assistant and ask: "What is wrong, in plain words, and what exact change should I make?"
