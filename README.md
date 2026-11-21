@@ -2,7 +2,7 @@
 
 The starter for **Zero to Live AI Agent on Cloud** (Future Proof India).
 
-It turns rough notes into a clean five-section report. You will change it into your own agent on Day 2 and put it online on Day 3. It runs straight away in **demo mode**, with no AI key.
+A delivery manager pastes a week of rough team notes (stand-ups, Jira lines, emails). The agent sorts every note, gives an overall Red / Amber / Green status, builds a risk and blocker register with owners and dates, checks its own work against three checks, fixes it, and lists the questions to ask the team. You will change it into your own agent on Day 2 and put it online on Day 3. It runs straight away in **demo mode**, with no AI key.
 
 ## Day 2: run it on your computer
 
@@ -32,6 +32,7 @@ It turns rough notes into a clean five-section report. You will change it into y
 | `prompts.py` | the agent's job description | rewrite it in your own words |
 | `app.py` | the screen people see | improve it |
 | `sample_updates.txt` | a sample week of notes | replace with your own samples |
+| `agent.py` | the agent's steps: sort, check, fix, ask | change only if you want new steps |
 | `demo.py` | simple rules used in demo mode | you can ignore this |
 
 ## Day 3: put it online
