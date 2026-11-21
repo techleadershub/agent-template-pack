@@ -22,16 +22,22 @@ Answer with ONE JSON object and nothing else, in exactly this shape:
 {
   "status": "Green" | "Amber" | "Red",
   "status_reason": "one short sentence",
+  "headline": "one sentence a sponsor reads first: what matters most this week and why",
   "summary": "two short sentences for a busy manager",
   "items": [
     {"section": "Highlights" | "Progress" | "Risks" | "Blockers" | "Next week",
      "text": "the note, cleaned up, keeping names, numbers and tickets exactly",
      "owner": "a name from the notes, or empty",
-     "due": "a date or day from the notes, or empty"}
+     "due": "a date or day from the notes, or empty",
+     "impact": "High" | "Medium" | "Low" | "" (only for Risks and Blockers: what it does to dates, money or customers)}
   ],
+  "actions": [{"action": "the most important thing to do this week", "owner": "a name from the notes, or empty", "why": "the risk or blocker it removes"}],
+  "decisions": ["a decision the manager or client must make, from the notes"],
+  "email": "a status email to the sponsor, under 120 words, plain and factual, starting 'Hi,' and ending with no signature",
   "questions": ["questions the manager should ask about missing information"]
 }
-Every note must appear in exactly one item.
+Every note must appear in exactly one item. At most 3 actions, most important first.
+Connect the notes: if one problem threatens a date or another task, say so in the headline and the impact.
 """
 
 TOKEN = re.compile(r"\b[A-Z]{2,}-\d+\b|\b\d+(?:\.\d+)?\b")
@@ -42,8 +48,10 @@ def _json_from(text: str) -> dict:
     if not m:
         raise ValueError("The model did not return the report in the expected format.")
     data = json.loads(m.group(0))
-    data.setdefault("items", [])
-    data.setdefault("questions", [])
+    for k in ("items", "questions", "actions", "decisions"):
+        data.setdefault(k, [])
+    data.setdefault("headline", "")
+    data.setdefault("email", "")
     return data
 
 
@@ -66,6 +74,14 @@ def check(result: dict, notes: str) -> list[str]:
             v = (i.get(field) or "").strip()
             if v and v.lower() not in low_notes:
                 invented.append(v)
+    for a_ in result.get("actions", []):
+        v = (a_.get("owner") or "").strip()
+        if v and v.lower() not in low_notes:
+            invented.append(v)
+    for field in ("headline", "summary", "email"):
+        for tok in TOKEN.findall(result.get(field, "") or ""):
+            if tok.lower() not in low_notes:
+                invented.append(tok)
     if invented:
         problems.append("Check 2: these do not appear in the notes: " + ", ".join(sorted(set(invented))[:8]) + ".")
     # c) missing owners for risks and blockers must lead to questions
@@ -125,7 +141,7 @@ def run(notes: str, system_prompt: str, api_key: str = "", base_url: str = "", m
 
 def to_markdown(result: dict) -> str:
     """The report as plain text, for download or copy."""
-    out = [f"# Weekly status report: {result.get('status', '')}", "", result.get("summary", ""), ""]
+    out = [f"# Weekly status report: {result.get('status', '')}", "", result.get("headline", ""), "", result.get("summary", ""), ""]
     for s in SECTIONS:
         out.append(f"## {s}")
         rows = [i for i in result.get("items", []) if i.get("section") == s]
@@ -135,6 +151,12 @@ def to_markdown(result: dict) -> str:
             extra = ", ".join(x for x in [f"owner: {i['owner']}" if i.get("owner") else "", f"due: {i['due']}" if i.get("due") else ""] if x)
             out.append(f"- {i.get('text', '')}" + (f" ({extra})" if extra else ""))
         out.append("")
+    if result.get("actions"):
+        out.append("## Top actions this week")
+        out.extend(f"- {x.get('action', '')} (owner: {x.get('owner') or 'not known'})" for x in result["actions"])
+        out.append("")
+    if result.get("email"):
+        out += ["## Email to sponsor", result["email"], ""]
     if result.get("questions"):
         out.append("## Questions for the team")
         out.extend(f"- {q}" for q in result["questions"])

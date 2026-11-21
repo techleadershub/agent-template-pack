@@ -43,7 +43,8 @@ def demo_analyse(notes: str) -> dict:
                 section = name
                 break
         d = DATE.search(line)
-        items.append({"section": section, "text": line, "owner": _owner(line), "due": d.group(1) if d else ""})
+        impact = "High" if section == "Blockers" else "Medium" if section == "Risks" else ""
+        items.append({"section": section, "text": line, "owner": _owner(line), "due": d.group(1) if d else "", "impact": impact})
 
     risks = [i for i in items if i["section"] == "Risks"]
     blockers = [i for i in items if i["section"] == "Blockers"]
@@ -58,7 +59,15 @@ def demo_analyse(notes: str) -> dict:
         return f"{k} {word}" if k == 1 else f"{k} {word}s"
 
     hl = len([i for i in items if i["section"] == "Highlights"])
+    actions = [{"action": "Resolve: " + i["text"], "owner": i["owner"], "why": i["section"][:-1]} for i in (blockers + risks)[:3]]
+    lead = (blockers + risks)[0]["text"] if (blockers or risks) else "No risks or blockers reported"
+    email = ("Hi,\n\nThis week's status is " + status + ". " + n(len(items), "update") + ": " + n(hl, "highlight") + ", "
+             + n(len(risks), "risk") + " and " + n(len(blockers), "blocker") + ". Main point: " + lead + ".\n\nThe full report is attached.")
     return {
+        "headline": f"{status}: {lead}.",
+        "actions": actions,
+        "decisions": [],
+        "email": email,
         "status": status,
         "status_reason": f"{n(len(blockers), 'blocker')} and {n(len(risks), 'risk')} this week.",
         "summary": f"{n(len(items), 'update')} this week: {n(hl, 'highlight')}, {n(len(risks), 'risk')} and {n(len(blockers), 'blocker')}.",

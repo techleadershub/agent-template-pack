@@ -76,8 +76,17 @@ if API_KEY:
 else:
     st.info("Demo mode: no AI key added yet, so the agent uses simple rules. Add your key to use a real model (see the README).")
 
-with open("sample_updates.txt", encoding="utf-8") as f:
-    SAMPLE = f.read()
+SAMPLES = {"Banking portal (sample_updates.txt)": "sample_updates.txt",
+           "Cloud migration": "samples/cloud_migration.txt",
+           "Telecom billing": "samples/telecom_billing.txt"}
+
+
+def read(p):
+    try:
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return ""
 
 if "updates" not in st.session_state:
     st.session_state.updates = ""
@@ -85,8 +94,14 @@ if "updates" not in st.session_state:
 left, right = st.columns([1, 1.35], gap="large")
 
 with left:
-    if st.button("Load a sample week"):
-        st.session_state.updates = SAMPLE
+    pick = st.selectbox("Choose a sample week", list(SAMPLES))
+    c1, c2 = st.columns(2)
+    if c1.button("Load a sample week", use_container_width=True):
+        st.session_state.updates = read(SAMPLES[pick])
+    up = c2.file_uploader("or upload a .txt file", type=["txt", "md", "csv"], label_visibility="collapsed")
+    if up is not None and st.session_state.get("_uploaded") != up.name:
+        st.session_state.updates = up.read().decode("utf-8", errors="ignore")
+        st.session_state._uploaded = up.name
     updates = st.text_area("Your team's notes for the week", key="updates", height=330,
                            placeholder="Paste stand-up notes, Jira lines or emails, one per line...")
     go = st.button("Write my report", type="primary", use_container_width=True)
@@ -119,6 +134,9 @@ with right:
         st.markdown(f'<span class="status" style="background:{colour}">Overall status: {result.get("status", "Not enough information")}</span>'
                     f'&nbsp;&nbsp;<span style="color:#475569">{result.get("status_reason", "")}</span>', unsafe_allow_html=True)
         st.write("")
+        if result.get("headline"):
+            st.markdown(f'<div class="card" style="border-left:6px solid {colour}"><h4>What matters most this week</h4>'
+                        f'<div style="font-size:1.08rem">{result["headline"]}</div></div>', unsafe_allow_html=True)
         st.markdown(f"**Summary.** {result.get('summary', 'Not enough information.')}")
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Highlights", count("Highlights"))
@@ -126,7 +144,8 @@ with right:
         k3.metric("Blockers", count("Blockers"))
         k4.metric("Questions", len(result.get("questions", [])))
 
-        tab_report, tab_register, tab_questions, tab_steps = st.tabs(["Report", "Risks and blockers", "Questions for the team", "Agent steps"])
+        tab_report, tab_register, tab_actions, tab_email, tab_questions, tab_steps = st.tabs(
+            ["Report", "Risks and blockers", "Actions and decisions", "Email to sponsor", "Questions for the team", "Agent steps"])
         with tab_report:
             for s in SECTIONS:
                 rows = [i for i in items if i.get("section") == s]
@@ -139,11 +158,23 @@ with right:
         with tab_register:
             reg = [i for i in items if i.get("section") in ("Risks", "Blockers")]
             if reg:
-                st.dataframe(pd.DataFrame([{"Type": i["section"][:-1], "Owner": i.get("owner") or "Not known", "Due": i.get("due") or "Not known",
+                st.dataframe(pd.DataFrame([{"Type": i["section"][:-1], "Impact": i.get("impact") or "Not known", "Owner": i.get("owner") or "Not known", "Due": i.get("due") or "Not known",
                                             "Item": i.get("text", "")} for i in reg]),
                              use_container_width=True, hide_index=True)
             else:
                 st.write("No risks or blockers this week.")
+        with tab_actions:
+            st.markdown("**Top actions this week**")
+            for n, a in enumerate(result.get("actions", []) or [], 1):
+                st.markdown(f'<div class="step"><b>{n}. {a.get("action", "")}</b><br><span style="color:#475569">Owner: {a.get("owner") or "Not known"}'
+                            f'  ·  Why: {a.get("why", "")}</span></div>', unsafe_allow_html=True)
+            if not result.get("actions"):
+                st.write("No actions needed.")
+            st.markdown("**Decisions needed**")
+            for dcs in result.get("decisions", []) or ["None this week."]:
+                st.markdown(f"- {dcs}")
+        with tab_email:
+            st.text_area("Ready to copy and send", result.get("email", "") or "Not enough information.", height=240)
         with tab_questions:
             for q in result.get("questions", []) or ["No information is missing."]:
                 st.markdown(f"- {q}")
